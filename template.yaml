@@ -1,0 +1,135 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  server
+
+  Sample SAM Template for server
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 25
+    MemorySize: 128
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaBasicExecution
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  ScootersApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Name: ScootersApi
+
+  GetScootersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: get_scooters/
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        GetScooters:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ScootersApi
+            Path: /scooter/get
+            Method: get
+
+  SaveScooterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: save_scooter/
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        SaveScooter:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ScootersApi
+            Path: /scooter/save
+            Method: post
+
+  UpdateScooterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: update_scooter/
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+        UpdateScooter:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ScootersApi
+            Path: /scooter/update
+            Method: put
+
+  DeleteScooterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: delete_scooter/
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Events:
+          DeleteScooter:
+              Type: Api
+              Properties:
+                RestApiId: !Ref ScootersApi
+                Path: /scooter/delete/{id}
+                Method: delete
+
+Outputs:
+    GetScootersApi:
+        Description: "API Gateway endpoint URL for Prod stage for ScootersApi function"
+        Value: !Sub "https://${ScootersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/scooter/"
+    GetScootersFunction:
+        Description: "GetScooters Lambda Function ARN"
+        Value: !GetAtt GetScootersFunction.Arn
+    SaveScooterApi:
+        Description: "API Gateway endpoint URL for Prod stage for ScootersApi function"
+        Value: !Sub "https://${ScootersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/scooter/save/"
+    SaveScooterFunction:
+        Description: "SaveScooter Lambda Function ARN"
+        Value: !GetAtt SaveScooterFunction.Arn
+    UpdateScooterApi:
+        Description: "API Gateway endpoint URL for Prod stage for ScootersApi function"
+        Value: !Sub "https://${ScootersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/scooter/update/"
+    UpdateScooterFunction:
+        Description: "UpdateScooter Lambda Function ARN"
+        Value: !GetAtt UpdateScooterFunction.Arn
+    DeleteScooterApi:
+        Description: "API Gateway endpoint URL for Prod stage for ScootersApi function"
+        Value: !Sub "https://${ScootersApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/scooter/delete/"
+    DeleteScooterFunction:
+        Description: "DeleteScooter Lambda Function ARN"
+        Value: !GetAtt DeleteScooterFunction.Arn
